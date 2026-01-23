@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Last Tab Settings</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Last Tab</h1>
+
+    <div class="setting">
+      <div class="setting-info">
+        <span class="setting-name">Quick Switch</span>
+        <span class="setting-hint">Ctrl+Q to switch to previous tab</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="quickSwitchEnabled" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting">
+      <div class="setting-info">
+        <span class="setting-name">MRU Popup</span>
+        <span class="setting-hint">Ctrl+Shift+Q to show recent tabs</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="mruPopupEnabled" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting">
+      <div class="setting-info">
+        <span class="setting-name">Auto-switch on close</span>
+        <span class="setting-hint">Switch to previous tab when closing active</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="autoSwitchOnCloseEnabled" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="divider"></div>
+
+    <a href="#" id="shortcutsLink" class="shortcuts-link">
+      <span class="icon">⌨️</span>
+      <span>Customize keyboard shortcuts</span>
+    </a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

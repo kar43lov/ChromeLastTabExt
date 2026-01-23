@@ -4,9 +4,20 @@ let allTabs = [];  // Original list
 let tabs = [];     // Filtered list
 let selectedIndex = 0;
 
+// Determine mode from URL
+const urlParams = new URLSearchParams(window.location.search);
+const mode = urlParams.get('mode') || 'browse';
+const isHoldMode = mode === 'hold';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const tabList = document.getElementById('tabList');
   const searchInput = document.getElementById('searchInput');
+  const searchContainer = document.querySelector('.search-container');
+
+  // Hide search in hold mode
+  if (isHoldMode && searchContainer) {
+    searchContainer.style.display = 'none';
+  }
 
   // Load MRU tabs from background
   chrome.runtime.sendMessage({ type: 'getMRUTabs', limit: 20 }, (response) => {
@@ -16,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tabs = [...allTabs];
       renderTabs();
 
-      // Pre-select second tab (first is current)
+      // Pre-select second tab (previous tab) in both modes
       if (tabs.length > 1) {
         selectedIndex = 1;
         updateSelection();
@@ -26,19 +37,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Search/filter handler
-  searchInput.addEventListener('input', () => {
-    filterTabs(searchInput.value);
-  });
+  // Search/filter handler (only in browse mode)
+  if (!isHoldMode) {
+    searchInput.addEventListener('input', () => {
+      filterTabs(searchInput.value);
+    });
+  }
 
   // Keyboard navigation
   document.addEventListener('keydown', handleKeydown);
 
-  // Close on focus loss (clicking outside, switching windows)
-  window.addEventListener('blur', () => {
-    window.close();
+  // Hold mode: listen for Control key release
+  if (isHoldMode) {
+    document.addEventListener('keyup', handleKeyup);
+  }
+
+  // Browse mode: close on focus loss
+  if (!isHoldMode) {
+    window.addEventListener('blur', () => {
+      window.close();
+    });
+  }
+
+  // Listen for messages from background (for subsequent Ctrl+Q presses)
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'moveSelectionDown') {
+      moveSelection(1);
+    }
   });
 });
+
+function handleKeyup(e) {
+  // In hold mode, when Control is released, switch to selected tab and close
+  if (isHoldMode && e.key === 'Control') {
+    selectTab(selectedIndex);
+  }
+}
 
 function filterTabs(query) {
   const q = query.toLowerCase().trim();
@@ -60,7 +94,8 @@ function filterTabs(query) {
 
 function renderTabs() {
   const tabList = document.getElementById('tabList');
-  const searchQuery = document.getElementById('searchInput').value.trim();
+  const searchInput = document.getElementById('searchInput');
+  const searchQuery = searchInput ? searchInput.value.trim() : '';
 
   if (tabs.length === 0) {
     tabList.innerHTML = '<div class="empty">No matching tabs</div>';
@@ -73,8 +108,8 @@ function renderTabs() {
 
   let html = '';
   tabs.forEach((tab, index) => {
-    // Add separator between MRU and other tabs (only if not searching)
-    if (!searchQuery && hasBothSections && index === firstNonMruIndex) {
+    // Add separator between MRU and other tabs (only if not searching and in browse mode)
+    if (!isHoldMode && !searchQuery && hasBothSections && index === firstNonMruIndex) {
       html += '<div class="section-divider">All Tabs</div>';
     }
 
@@ -117,6 +152,13 @@ function updateSelection() {
 }
 
 function handleKeydown(e) {
+  // In hold mode, Q moves selection down (like additional Ctrl+Q presses)
+  if (isHoldMode && e.key.toLowerCase() === 'q') {
+    e.preventDefault();
+    moveSelection(1);
+    return;
+  }
+
   switch (e.key) {
     case 'ArrowDown':
       e.preventDefault();

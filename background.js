@@ -131,7 +131,35 @@ chrome.windows.onRemoved.addListener((windowId) => {
 // Handle keyboard commands
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'quick-switch') {
-    await quickSwitch();
+    if (!settings.quickSwitchEnabled) {
+      return;
+    }
+
+    // Check if popup is already open (hold mode active)
+    if (mruPopupWindowId !== null) {
+      // Send message to popup to move selection down
+      try {
+        const windows = await chrome.windows.get(mruPopupWindowId);
+        if (windows) {
+          chrome.runtime.sendMessage({ type: 'moveSelectionDown' });
+        }
+      } catch {
+        // Window closed, open new one
+        mruPopupWindowId = null;
+      }
+      if (mruPopupWindowId !== null) return;
+    }
+
+    // Open MRU popup in hold mode
+    const popup = await chrome.windows.create({
+      url: 'mru-popup.html?mode=hold',
+      type: 'popup',
+      width: 400,
+      height: 450,
+      focused: true
+    });
+    mruPopupWindowId = popup.id;
+
   } else if (command === 'show-mru-popup') {
     if (!settings.mruPopupEnabled) {
       return;
@@ -148,9 +176,9 @@ chrome.commands.onCommand.addListener(async (command) => {
       return;
     }
 
-    // Open MRU popup as a new window
+    // Open MRU popup as a new window (browse mode)
     const popup = await chrome.windows.create({
-      url: 'mru-popup.html',
+      url: 'mru-popup.html?mode=browse',
       type: 'popup',
       width: 400,
       height: 450,

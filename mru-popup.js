@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load MRU tabs from background
   chrome.runtime.sendMessage({ type: 'getMRUTabs', limit: 10 }, (response) => {
     if (response && response.tabs) {
-      tabs = response.tabs;
+      // Filter out the MRU popup itself
+      tabs = response.tabs.filter(tab => !tab.url.includes('mru-popup.html'));
       renderTabs();
 
       // Pre-select first tab (which is actually the current one, so select second)

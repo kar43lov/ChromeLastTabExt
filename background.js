@@ -17,9 +17,21 @@ const DEFAULT_SETTINGS = {
 
 let settings = { ...DEFAULT_SETTINGS };
 
+// Track MRU popup window
+let mruPopupWindowId = null;
+
 // ============================================
 // MRU Stack Operations
 // ============================================
+
+// Debounced save to avoid excessive writes
+let saveTimeout = null;
+function saveStackDebounced() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    chrome.storage.local.set({ tabStack });
+  }, 500);
+}
 
 function moveToTop(tabId, windowId) {
   // Remove if already exists
@@ -30,11 +42,15 @@ function moveToTop(tabId, windowId) {
   if (tabStack.length > 100) {
     tabStack.pop();
   }
+  // Persist to survive Service Worker sleep
+  saveStackDebounced();
 }
 
 function removeFromStack(tabId) {
   const wasFirst = tabStack.length > 0 && tabStack[0].tabId === tabId;
   tabStack = tabStack.filter(t => t.tabId !== tabId);
+  // Persist to survive Service Worker sleep
+  saveStackDebounced();
   return wasFirst;
 }
 
@@ -104,6 +120,12 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
 // Track window removal - clean up tabs from closed windows
 chrome.windows.onRemoved.addListener((windowId) => {
   tabStack = tabStack.filter(t => t.windowId !== windowId);
+  saveStackDebounced();
+
+  // Reset popup tracking if MRU popup was closed
+  if (windowId === mruPopupWindowId) {
+    mruPopupWindowId = null;
+  }
 });
 
 // Handle keyboard commands
@@ -114,14 +136,27 @@ chrome.commands.onCommand.addListener(async (command) => {
     if (!settings.mruPopupEnabled) {
       return;
     }
+
+    // Check if popup is already open
+    if (mruPopupWindowId !== null) {
+      try {
+        await chrome.windows.remove(mruPopupWindowId);
+      } catch {
+        // Window already closed
+      }
+      mruPopupWindowId = null;
+      return;
+    }
+
     // Open MRU popup as a new window
-    chrome.windows.create({
+    const popup = await chrome.windows.create({
       url: 'mru-popup.html',
       type: 'popup',
       width: 400,
       height: 450,
       focused: true
     });
+    mruPopupWindowId = popup.id;
   }
 });
 
@@ -180,29 +215,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function initialize() {
   // Load settings
-  const stored = await chrome.storage.local.get('settings');
+  const stored = await chrome.storage.local.get(['settings', 'tabStack']);
   if (stored.settings) {
     settings = { ...DEFAULT_SETTINGS, ...stored.settings };
   }
 
-  // Initialize stack with current tabs across all windows
+  // Get all current tabs to validate saved stack
   const windows = await chrome.windows.getAll({ populate: true });
+  const existingTabIds = new Set();
+  const tabWindowMap = new Map();
 
   for (const window of windows) {
     if (window.tabs) {
       for (const tab of window.tabs) {
-        if (tab.active) {
-          // Active tabs go to front
-          tabStack.unshift({ tabId: tab.id, windowId: window.id });
-        } else {
-          // Inactive tabs go to back
-          tabStack.push({ tabId: tab.id, windowId: window.id });
-        }
+        existingTabIds.add(tab.id);
+        tabWindowMap.set(tab.id, { tabId: tab.id, windowId: window.id, active: tab.active });
       }
     }
   }
 
-  console.log('Last Tab extension initialized with', tabStack.length, 'tabs');
+  // Try to restore saved stack
+  if (stored.tabStack && stored.tabStack.length > 0) {
+    // Filter out tabs that no longer exist
+    tabStack = stored.tabStack.filter(t => existingTabIds.has(t.tabId));
+
+    // Add any new tabs not in saved stack
+    for (const [tabId, tabInfo] of tabWindowMap) {
+      if (!tabStack.some(t => t.tabId === tabId)) {
+        if (tabInfo.active) {
+          tabStack.unshift({ tabId, windowId: tabInfo.windowId });
+        } else {
+          tabStack.push({ tabId, windowId: tabInfo.windowId });
+        }
+      }
+    }
+
+    console.log('Last Tab: restored', tabStack.length, 'tabs from storage');
+  } else {
+    // Fresh start - initialize from current tabs
+    for (const window of windows) {
+      if (window.tabs) {
+        for (const tab of window.tabs) {
+          if (tab.active) {
+            tabStack.unshift({ tabId: tab.id, windowId: window.id });
+          } else {
+            tabStack.push({ tabId: tab.id, windowId: window.id });
+          }
+        }
+      }
+    }
+    console.log('Last Tab: initialized with', tabStack.length, 'tabs');
+  }
 }
 
 // Run initialization

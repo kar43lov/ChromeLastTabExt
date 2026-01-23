@@ -116,7 +116,7 @@ function renderTabs() {
     html += `
       <div class="tab-item ${index === selectedIndex ? 'selected' : ''}" data-index="${index}">
         ${tab.favIconUrl
-          ? `<img class="tab-favicon" src="${escapeHtml(tab.favIconUrl)}" alt="" onerror="this.classList.add('placeholder'); this.src='';">`
+          ? `<img class="tab-favicon" src="${escapeHtml(tab.favIconUrl)}" alt="">`
           : '<div class="tab-favicon placeholder"></div>'
         }
         <div class="tab-info">
@@ -134,6 +134,14 @@ function renderTabs() {
     item.addEventListener('click', () => {
       const index = parseInt(item.dataset.index, 10);
       selectTab(index);
+    });
+  });
+
+  // Add error handlers for favicons (CSP-compliant, no inline handlers)
+  tabList.querySelectorAll('.tab-favicon').forEach(img => {
+    img.addEventListener('error', () => {
+      img.classList.add('placeholder');
+      img.src = '';
     });
   });
 }

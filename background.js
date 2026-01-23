@@ -163,28 +163,51 @@ chrome.commands.onCommand.addListener(async (command) => {
 // Handle messages from popups
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'getMRUTabs') {
-    // Get tab info for MRU list
-    const mruEntries = getMRUTabs(message.limit || 10);
+    (async () => {
+      // Get MRU tabs first
+      const mruEntries = getMRUTabs(message.limit || 20);
+      const mruTabIds = new Set(mruEntries.map(e => e.tabId));
 
-    Promise.all(
-      mruEntries.map(async (entry) => {
-        try {
-          const tab = await chrome.tabs.get(entry.tabId);
-          return {
-            id: tab.id,
-            windowId: tab.windowId,
-            title: tab.title || 'Untitled',
-            url: tab.url || '',
-            favIconUrl: tab.favIconUrl || ''
-          };
-        } catch {
-          // Tab no longer exists
-          return null;
-        }
-      })
-    ).then((tabs) => {
-      sendResponse({ tabs: tabs.filter(t => t !== null) });
-    });
+      // Get tab info for MRU list
+      const mruTabs = await Promise.all(
+        mruEntries.map(async (entry) => {
+          try {
+            const tab = await chrome.tabs.get(entry.tabId);
+            return {
+              id: tab.id,
+              windowId: tab.windowId,
+              title: tab.title || 'Untitled',
+              url: tab.url || '',
+              favIconUrl: tab.favIconUrl || '',
+              isMRU: true
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      // Get all other open tabs not in MRU
+      const allTabs = await chrome.tabs.query({});
+      const otherTabs = allTabs
+        .filter(tab => !mruTabIds.has(tab.id))
+        .map(tab => ({
+          id: tab.id,
+          windowId: tab.windowId,
+          title: tab.title || 'Untitled',
+          url: tab.url || '',
+          favIconUrl: tab.favIconUrl || '',
+          isMRU: false
+        }));
+
+      // Combine: MRU first, then others
+      const result = [
+        ...mruTabs.filter(t => t !== null),
+        ...otherTabs
+      ];
+
+      sendResponse({ tabs: result });
+    })();
 
     return true; // Keep channel open for async response
   }

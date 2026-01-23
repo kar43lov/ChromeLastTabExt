@@ -1,19 +1,22 @@
 // Last Tab MRU Popup
 
-let tabs = [];
+let allTabs = [];  // Original list
+let tabs = [];     // Filtered list
 let selectedIndex = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const tabList = document.getElementById('tabList');
+  const searchInput = document.getElementById('searchInput');
 
   // Load MRU tabs from background
-  chrome.runtime.sendMessage({ type: 'getMRUTabs', limit: 10 }, (response) => {
+  chrome.runtime.sendMessage({ type: 'getMRUTabs', limit: 20 }, (response) => {
     if (response && response.tabs) {
       // Filter out the MRU popup itself
-      tabs = response.tabs.filter(tab => !tab.url.includes('mru-popup.html'));
+      allTabs = response.tabs.filter(tab => !tab.url.includes('mru-popup.html'));
+      tabs = [...allTabs];
       renderTabs();
 
-      // Pre-select first tab (which is actually the current one, so select second)
+      // Pre-select second tab (first is current)
       if (tabs.length > 1) {
         selectedIndex = 1;
         updateSelection();
@@ -23,30 +26,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Search/filter handler
+  searchInput.addEventListener('input', () => {
+    filterTabs(searchInput.value);
+  });
+
   // Keyboard navigation
   document.addEventListener('keydown', handleKeydown);
+
+  // Close on focus loss (clicking outside, switching windows)
+  window.addEventListener('blur', () => {
+    window.close();
+  });
 });
+
+function filterTabs(query) {
+  const q = query.toLowerCase().trim();
+
+  if (!q) {
+    tabs = [...allTabs];
+  } else {
+    tabs = allTabs.filter(tab => {
+      const title = (tab.title || '').toLowerCase();
+      const url = (tab.url || '').toLowerCase();
+      return title.includes(q) || url.includes(q);
+    });
+  }
+
+  selectedIndex = 0;
+  renderTabs();
+  updateSelection();
+}
 
 function renderTabs() {
   const tabList = document.getElementById('tabList');
+  const searchQuery = document.getElementById('searchInput').value.trim();
 
   if (tabs.length === 0) {
-    tabList.innerHTML = '<div class="empty">No recent tabs</div>';
+    tabList.innerHTML = '<div class="empty">No matching tabs</div>';
     return;
   }
 
-  tabList.innerHTML = tabs.map((tab, index) => `
-    <div class="tab-item ${index === selectedIndex ? 'selected' : ''}" data-index="${index}">
-      ${tab.favIconUrl
-        ? `<img class="tab-favicon" src="${escapeHtml(tab.favIconUrl)}" alt="" onerror="this.classList.add('placeholder'); this.src='';">`
-        : '<div class="tab-favicon placeholder"></div>'
-      }
-      <div class="tab-info">
-        <div class="tab-title">${escapeHtml(tab.title)}</div>
-        <div class="tab-url">${escapeHtml(formatUrl(tab.url))}</div>
+  // Find where MRU tabs end and other tabs begin
+  const firstNonMruIndex = tabs.findIndex(t => !t.isMRU);
+  const hasBothSections = firstNonMruIndex > 0 && firstNonMruIndex < tabs.length;
+
+  let html = '';
+  tabs.forEach((tab, index) => {
+    // Add separator between MRU and other tabs (only if not searching)
+    if (!searchQuery && hasBothSections && index === firstNonMruIndex) {
+      html += '<div class="section-divider">All Tabs</div>';
+    }
+
+    html += `
+      <div class="tab-item ${index === selectedIndex ? 'selected' : ''}" data-index="${index}">
+        ${tab.favIconUrl
+          ? `<img class="tab-favicon" src="${escapeHtml(tab.favIconUrl)}" alt="" onerror="this.classList.add('placeholder'); this.src='';">`
+          : '<div class="tab-favicon placeholder"></div>'
+        }
+        <div class="tab-info">
+          <div class="tab-title">${escapeHtml(tab.title)}</div>
+          <div class="tab-url">${escapeHtml(formatUrl(tab.url))}</div>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  });
+
+  tabList.innerHTML = html;
 
   // Add click handlers
   tabList.querySelectorAll('.tab-item').forEach(item => {
@@ -73,18 +119,22 @@ function updateSelection() {
 function handleKeydown(e) {
   switch (e.key) {
     case 'ArrowDown':
-    case 'Tab':
       e.preventDefault();
-      if (e.shiftKey && e.key === 'Tab') {
-        moveSelection(-1);
-      } else {
-        moveSelection(1);
-      }
+      moveSelection(1);
       break;
 
     case 'ArrowUp':
       e.preventDefault();
       moveSelection(-1);
+      break;
+
+    case 'Tab':
+      e.preventDefault();
+      if (e.shiftKey) {
+        moveSelection(-1);
+      } else {
+        moveSelection(1);
+      }
       break;
 
     case 'Enter':

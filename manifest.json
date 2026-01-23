@@ -27,14 +27,14 @@
     "quick-switch": {
       "suggested_key": {
         "default": "Ctrl+Q",
-        "mac": "Command+Q"
+        "mac": "MacCtrl+Q"
       },
       "description": "Switch to previous tab"
     },
     "show-mru-popup": {
       "suggested_key": {
         "default": "Ctrl+Shift+Q",
-        "mac": "Command+Shift+Q"
+        "mac": "MacCtrl+Shift+Q"
       },
       "description": "Show recent tabs list"
     }

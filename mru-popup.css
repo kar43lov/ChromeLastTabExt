@@ -67,6 +67,54 @@ h1 {
   flex-shrink: 0;
 }
 
+/* Search */
+.search-container {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  background: #f8f8f8;
+  color: inherit;
+}
+
+#searchInput:focus {
+  border-color: #0066cc;
+  background: #fff;
+}
+
+#searchInput::placeholder {
+  color: #999;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-container {
+    border-color: #333;
+  }
+
+  #searchInput {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+  #searchInput:focus {
+    border-color: #4a9eff;
+    background: #333;
+  }
+
+  #searchInput::placeholder {
+    color: #666;
+  }
+}
+
 /* Tab list */
 .tab-list {
   flex: 1;
@@ -84,6 +132,25 @@ h1 {
   padding: 20px;
   text-align: center;
   color: #888;
+}
+
+/* Section divider */
+.section-divider {
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-top: 1px solid #eee;
+  margin-top: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .section-divider {
+    color: #666;
+    border-color: #333;
+  }
 }
 
 /* Tab item */

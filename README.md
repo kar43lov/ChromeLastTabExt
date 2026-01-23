@@ -27,11 +27,17 @@ Go to `chrome://extensions/shortcuts` to change default hotkeys.
 
 ## Usage
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Q` | Switch to previous tab |
-| `Ctrl+Shift+Q` | Open MRU popup with recent tabs |
-| Click extension icon | Open settings |
+| Action | Windows/Linux | macOS |
+|--------|---------------|-------|
+| Switch to previous tab | `Ctrl+Q` | `Control+Q` |
+| Open MRU popup | `Ctrl+Shift+Q` | `Control+Shift+Q` |
+| Open settings | Click extension icon | Click extension icon |
+
+**Note**: On macOS, we use `Control` (not `Command`) because `Command+Q` is reserved for quitting applications. You can customize shortcuts at `chrome://extensions/shortcuts`.
+
+### MRU Popup Features
+- **Search/filter**: Start typing to filter tabs by title or URL
+- **Keyboard navigation**: Arrow keys or Tab to navigate, Enter to select
 
 ### Settings
 

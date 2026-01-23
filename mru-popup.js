@@ -34,6 +34,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (tabs.length > 1) {
         selectedIndex = 1;
         updateSelection();
+
+        // In quick mode: immediately switch to previous tab
+        if (isQuickMode) {
+          const tab = tabs[selectedIndex];
+          if (tab) {
+            chrome.runtime.sendMessage({
+              type: 'switchToTab',
+              tabId: tab.id,
+              windowId: tab.windowId
+            });
+          }
+        }
       }
     } else {
       tabList.innerHTML = '<div class="empty">No recent tabs</div>';

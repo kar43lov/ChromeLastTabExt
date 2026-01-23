@@ -6,6 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Chrome extension (Manifest V3) that implements MRU (Most Recently Used) tab switching, similar to Ctrl+Tab behavior in IDEs like Rider or VS Code.
 
+## Rules
+
+**Git — НЕ делать самостоятельно:**
+- НЕ делать `git commit` без явного запроса пользователя
+- НЕ делать `git push` без явного запроса пользователя
+- НЕ делать `git add -A` или `git add .` без запроса
+
+Коммиты и пуши — только по явной команде пользователя.
+
 ## Architecture
 
 **Service Worker** (`background.js`):
@@ -51,7 +60,9 @@ powershell -ExecutionPolicy Bypass -File create-icons.ps1
 {
   quickSwitchEnabled: boolean,      // Ctrl+Q functionality
   mruPopupEnabled: boolean,         // Ctrl+Shift+Q functionality
-  autoSwitchOnCloseEnabled: boolean // Switch to MRU tab on active tab close
+  autoSwitchOnCloseEnabled: boolean, // Switch to MRU tab on active tab close
+  showPopupOnQuickSwitch: boolean,  // Show popup on Ctrl+Q (default: false)
+  holdModeEnabled: boolean          // Hold Ctrl + multiple Q (default: false)
 }
 ```
 

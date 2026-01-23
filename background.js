@@ -22,6 +22,10 @@ let settings = { ...DEFAULT_SETTINGS };
 // Track MRU popup window
 let mruPopupWindowId = null;
 
+// Hold mode without popup: track position in MRU stack
+let holdModeIndex = 1;
+let holdModeResetTimeout = null;
+
 // ============================================
 // MRU Stack Operations
 // ============================================
@@ -137,42 +141,31 @@ chrome.commands.onCommand.addListener(async (command) => {
       return;
     }
 
-    // If hold mode disabled and no popup shown - just do simple ping-pong switch
-    if (!settings.holdModeEnabled && !settings.showPopupOnQuickSwitch) {
+    // If hold mode disabled - just do simple ping-pong switch
+    if (!settings.holdModeEnabled) {
       await quickSwitch();
       return;
     }
 
-    // Check if popup is already open (hold mode active)
-    if (mruPopupWindowId !== null && settings.holdModeEnabled) {
-      // Send message to popup to move selection down
-      try {
-        const windows = await chrome.windows.get(mruPopupWindowId);
-        if (windows) {
-          chrome.runtime.sendMessage({ type: 'moveSelectionDown' });
+    // Hold mode enabled
+    if (settings.showPopupOnQuickSwitch) {
+      // Hold mode WITH popup
+      if (mruPopupWindowId !== null) {
+        // Popup already open - move selection down
+        try {
+          const windows = await chrome.windows.get(mruPopupWindowId);
+          if (windows) {
+            chrome.runtime.sendMessage({ type: 'moveSelectionDown' });
+          }
+        } catch {
+          mruPopupWindowId = null;
         }
-      } catch {
-        // Window closed, open new one
-        mruPopupWindowId = null;
+        if (mruPopupWindowId !== null) return;
       }
-      if (mruPopupWindowId !== null) return;
-    }
 
-    // Close existing popup if any
-    if (mruPopupWindowId !== null) {
-      try {
-        await chrome.windows.remove(mruPopupWindowId);
-      } catch {}
-      mruPopupWindowId = null;
-    }
-
-    // Determine mode based on settings
-    const popupMode = settings.holdModeEnabled ? 'hold' : 'quick';
-
-    // If popup should be shown
-    if (settings.showPopupOnQuickSwitch || settings.holdModeEnabled) {
+      // Open popup in hold mode
       const popup = await chrome.windows.create({
-        url: `mru-popup.html?mode=${popupMode}`,
+        url: 'mru-popup.html?mode=hold',
         type: 'popup',
         width: 400,
         height: 450,
@@ -180,7 +173,28 @@ chrome.commands.onCommand.addListener(async (command) => {
       });
       mruPopupWindowId = popup.id;
     } else {
-      await quickSwitch();
+      // Hold mode WITHOUT popup - navigate through MRU with each press
+      // Reset timeout on each press
+      if (holdModeResetTimeout) {
+        clearTimeout(holdModeResetTimeout);
+      }
+
+      // Switch to tab at current holdModeIndex
+      if (tabStack.length > holdModeIndex) {
+        const tab = tabStack[holdModeIndex];
+        await switchToTab(tab.tabId, tab.windowId);
+
+        // Move to next index for subsequent presses
+        holdModeIndex++;
+        if (holdModeIndex >= tabStack.length) {
+          holdModeIndex = 1; // Wrap around
+        }
+      }
+
+      // Reset index after 300ms of inactivity (Ctrl released)
+      holdModeResetTimeout = setTimeout(() => {
+        holdModeIndex = 1;
+      }, 300);
     }
 
   } else if (command === 'show-mru-popup') {

@@ -32,6 +32,8 @@
 - [x] Показ всех открытых вкладок (MRU + остальные)
 - [x] Закрытие popup при потере фокуса
 - [x] macOS shortcuts (Control вместо Command)
+- [x] Hold-режим — удерживать Ctrl + несколько Q для навигации глубже в историю
+- [x] Опция показа popup на Ctrl+Q (зависит от Hold-режима)
 
 ### В процессе
 - [ ] —
@@ -39,6 +41,31 @@
 ---
 
 ## История изменений
+
+### 2026-01-23 — Hold-режим и расширенные настройки
+
+**Входные данные**:
+- Добавить Hold-режим: удерживать Ctrl + несколько нажатий Q для навигации глубже в MRU
+- Добавить опцию "Show popup on Ctrl+Q" — показывать popup при quick switch
+- Зависимость: Show popup доступен только когда Hold mode включён
+
+**Что сделано**:
+- Добавлены две новые настройки: Hold mode и Show popup on Ctrl+Q
+- Hold mode без popup — переключение по MRU с таймаутом сброса 300ms
+- Hold mode с popup — открытие MRU popup, Q двигает выделение вниз
+- UI: Show popup автоматически отключается когда Hold mode выключен
+- Исправлен CSP violation (inline onerror handler → addEventListener)
+- Три режима popup: browse, hold, quick
+
+**Файлы затронуты**:
+- `background.js` — hold mode logic, holdModeIndex tracking с таймаутом
+- `popup.html` — два новых toggle с зависимостью
+- `popup.js` — updateShowPopupState() для управления зависимостью
+- `popup.css` — стили для disabled состояния
+- `mru-popup.js` — три режима, CSP-compliant favicon error handling
+- `CLAUDE.md` — обновлена Settings Schema
+
+---
 
 ### 2026-01-23 — UX улучшения и macOS поддержка
 
@@ -117,7 +144,6 @@ Ctrl+Tab недоступен в Chrome API, поэтому используем
 - [ ] Опубликовать в Chrome Web Store
 
 ### Можно сделать
-- [ ] Hold-режим (Ctrl удержан + несколько Q) — сложно из-за ограничений API
 - [ ] Кастомизация глубины истории в настройках
 - [ ] Темы оформления popup
 

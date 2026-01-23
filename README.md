@@ -6,7 +6,8 @@ Chrome extension for MRU (Most Recently Used) tab switching — like Ctrl+Tab in
 
 - **Quick Switch** (Ctrl+Q) — instantly switch to the previous tab
 - **Ping-pong navigation** — double press returns you back (great for comparing pages)
-- **MRU Popup** (Ctrl+Shift+Q) — shows 10 most recent tabs with favicons
+- **Hold Mode** — hold Ctrl and press Q multiple times to go deeper in history
+- **MRU Popup** (Ctrl+Shift+Q) — shows recent tabs with search/filter
 - **Cross-window** — switch between tabs in different Chrome windows
 - **Auto-switch on close** — when closing active tab, jump to the previous one (optional)
 - **Configurable** — enable/disable each feature independently
@@ -44,6 +45,8 @@ Go to `chrome://extensions/shortcuts` to change default hotkeys.
 - **Quick Switch** — enable/disable Ctrl+Q
 - **MRU Popup** — enable/disable Ctrl+Shift+Q
 - **Auto-switch on close** — automatically switch to previous tab when closing active
+- **Hold Mode** — hold Ctrl + press Q multiple times to navigate deeper in MRU
+- **Show popup on Ctrl+Q** — show tab list popup during quick switch (requires Hold Mode)
 
 ## Why?
 

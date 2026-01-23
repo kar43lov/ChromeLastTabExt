@@ -91,6 +91,16 @@ h1 {
   color: #666;
 }
 
+/* Disabled setting */
+.setting.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.setting.disabled .slider {
+  cursor: not-allowed;
+}
+
 /* Toggle switch */
 .toggle {
   position: relative;

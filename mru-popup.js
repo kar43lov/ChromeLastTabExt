@@ -5,17 +5,20 @@ let tabs = [];     // Filtered list
 let selectedIndex = 0;
 
 // Determine mode from URL
+// Modes: 'browse' (Ctrl+Shift+Q), 'hold' (Ctrl+Q with hold), 'quick' (Ctrl+Q with popup but no hold)
 const urlParams = new URLSearchParams(window.location.search);
 const mode = urlParams.get('mode') || 'browse';
 const isHoldMode = mode === 'hold';
+const isQuickMode = mode === 'quick';
+const isBrowseMode = mode === 'browse';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const tabList = document.getElementById('tabList');
   const searchInput = document.getElementById('searchInput');
   const searchContainer = document.querySelector('.search-container');
 
-  // Hide search in hold mode
-  if (isHoldMode && searchContainer) {
+  // Hide search in hold and quick modes
+  if ((isHoldMode || isQuickMode) && searchContainer) {
     searchContainer.style.display = 'none';
   }
 
@@ -52,8 +55,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('keyup', handleKeyup);
   }
 
-  // Browse mode: close on focus loss
-  if (!isHoldMode) {
+  // Browse and quick modes: close on focus loss
+  if (isBrowseMode || isQuickMode) {
     window.addEventListener('blur', () => {
       window.close();
     });

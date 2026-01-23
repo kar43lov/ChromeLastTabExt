@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const quickSwitchToggle = document.getElementById('quickSwitchEnabled');
   const mruPopupToggle = document.getElementById('mruPopupEnabled');
   const autoSwitchToggle = document.getElementById('autoSwitchOnCloseEnabled');
+  const showPopupToggle = document.getElementById('showPopupOnQuickSwitch');
+  const holdModeToggle = document.getElementById('holdModeEnabled');
   const shortcutsLink = document.getElementById('shortcutsLink');
 
   // Load current settings
@@ -12,6 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       quickSwitchToggle.checked = response.settings.quickSwitchEnabled;
       mruPopupToggle.checked = response.settings.mruPopupEnabled;
       autoSwitchToggle.checked = response.settings.autoSwitchOnCloseEnabled;
+      showPopupToggle.checked = response.settings.showPopupOnQuickSwitch || false;
+      holdModeToggle.checked = response.settings.holdModeEnabled || false;
     }
   });
 
@@ -34,6 +38,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({
       type: 'updateSettings',
       settings: { autoSwitchOnCloseEnabled: autoSwitchToggle.checked }
+    });
+  });
+
+  showPopupToggle.addEventListener('change', () => {
+    chrome.runtime.sendMessage({
+      type: 'updateSettings',
+      settings: { showPopupOnQuickSwitch: showPopupToggle.checked }
+    });
+  });
+
+  holdModeToggle.addEventListener('change', () => {
+    chrome.runtime.sendMessage({
+      type: 'updateSettings',
+      settings: { holdModeEnabled: holdModeToggle.checked }
     });
   });
 

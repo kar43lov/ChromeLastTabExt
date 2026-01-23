@@ -12,7 +12,9 @@ let tabStack = [];
 const DEFAULT_SETTINGS = {
   quickSwitchEnabled: true,
   mruPopupEnabled: true,
-  autoSwitchOnCloseEnabled: true
+  autoSwitchOnCloseEnabled: true,
+  showPopupOnQuickSwitch: false,  // Show popup on Ctrl+Q (false = just switch)
+  holdModeEnabled: false          // Hold Ctrl + multiple Q to go deeper (false = ping-pong only)
 };
 
 let settings = { ...DEFAULT_SETTINGS };
@@ -135,8 +137,14 @@ chrome.commands.onCommand.addListener(async (command) => {
       return;
     }
 
+    // If hold mode disabled and no popup shown - just do simple ping-pong switch
+    if (!settings.holdModeEnabled && !settings.showPopupOnQuickSwitch) {
+      await quickSwitch();
+      return;
+    }
+
     // Check if popup is already open (hold mode active)
-    if (mruPopupWindowId !== null) {
+    if (mruPopupWindowId !== null && settings.holdModeEnabled) {
       // Send message to popup to move selection down
       try {
         const windows = await chrome.windows.get(mruPopupWindowId);
@@ -150,15 +158,30 @@ chrome.commands.onCommand.addListener(async (command) => {
       if (mruPopupWindowId !== null) return;
     }
 
-    // Open MRU popup in hold mode
-    const popup = await chrome.windows.create({
-      url: 'mru-popup.html?mode=hold',
-      type: 'popup',
-      width: 400,
-      height: 450,
-      focused: true
-    });
-    mruPopupWindowId = popup.id;
+    // Close existing popup if any
+    if (mruPopupWindowId !== null) {
+      try {
+        await chrome.windows.remove(mruPopupWindowId);
+      } catch {}
+      mruPopupWindowId = null;
+    }
+
+    // Determine mode based on settings
+    const popupMode = settings.holdModeEnabled ? 'hold' : 'quick';
+
+    // If popup should be shown
+    if (settings.showPopupOnQuickSwitch || settings.holdModeEnabled) {
+      const popup = await chrome.windows.create({
+        url: `mru-popup.html?mode=${popupMode}`,
+        type: 'popup',
+        width: 400,
+        height: 450,
+        focused: true
+      });
+      mruPopupWindowId = popup.id;
+    } else {
+      await quickSwitch();
+    }
 
   } else if (command === 'show-mru-popup') {
     if (!settings.mruPopupEnabled) {

@@ -12,3 +12,6 @@ Thumbs.db
 
 # Prompts (internal)
 prompts/
+
+# Store package (regenerate with PowerShell)
+store/*.zip

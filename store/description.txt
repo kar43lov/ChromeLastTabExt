@@ -1,0 +1,87 @@
+TITLE:
+Last Tab - MRU Tab Switcher
+
+SHORT DESCRIPTION (132 chars max):
+Switch tabs like in IDE. Ctrl+Q jumps to previous tab. Hold Ctrl and press Q multiple times to go further back in history.
+
+DETAILED DESCRIPTION:
+
+🚀 Switch tabs like a pro — just like in your favorite IDE!
+
+Tired of Chrome's default Ctrl+Tab that cycles through tabs in order? Last Tab brings IDE-style tab switching to your browser. Jump instantly to the tab you were just viewing, or navigate through your recent tab history.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⌨️ KEYBOARD SHORTCUTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Ctrl+Q — Quick switch to previous tab
+  Hold Ctrl and press Q multiple times to go further back in history.
+  A popup shows your recent tabs while you navigate.
+  Release Ctrl to switch to the selected tab.
+
+• Ctrl+Shift+Q — Open Recent Tabs popup
+  Browse all your tabs with search/filter.
+  Use arrow keys to navigate, Enter to select.
+
+macOS: Use Control instead of Ctrl (Command+Q quits apps)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✨ KEY FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 MRU (Most Recently Used) Navigation
+Switch tabs based on when you last used them, not their position. Perfect for comparing two pages — press Ctrl+Q twice to ping-pong between them.
+
+🔍 Search & Filter
+Quickly find any open tab by typing in the Recent Tabs popup. Searches both tab titles and URLs.
+
+🪟 Cross-Window Support
+Navigate between tabs across all Chrome windows seamlessly.
+
+⚡ Auto-Switch on Close
+When you close a tab, automatically jump to the previous one (optional, can be disabled).
+
+🎨 Dark Mode Support
+Clean, minimal interface that adapts to your system theme.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️ SETTINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click the extension icon to access settings:
+• Enable/disable Quick Switch (Ctrl+Q)
+• Enable/disable MRU Popup (Ctrl+Shift+Q)
+• Enable/disable Auto-switch on tab close
+
+Customize shortcuts at: chrome://extensions/shortcuts
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔒 PRIVACY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• No data collection — everything stays local
+• No analytics or tracking
+• No external connections
+• Open source: github.com/kar43lov/ChromeLastTabExt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 USE CASES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Developers comparing code and documentation
+• Researchers switching between sources
+• Anyone who misses IDE-style tab navigation
+• Power users who want faster tab management
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Made with ❤️ for productivity enthusiasts
+
+Questions or feedback? Open an issue on GitHub!
+
+
+CATEGORY:
+Productivity
+
+LANGUAGE:
+English

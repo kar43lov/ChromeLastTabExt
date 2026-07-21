@@ -22,6 +22,10 @@ let settings = { ...DEFAULT_SETTINGS };
 // Track MRU popup window
 let mruPopupWindowId = null;
 
+// Promise for the async startup restore — handlers await this so a command
+// that wakes the Service Worker doesn't run against an empty stack.
+let initPromise = null;
+
 // Hold mode without popup: track position in MRU stack
 let holdModeIndex = 1;
 let holdModeResetTimeout = null;
@@ -30,13 +34,11 @@ let holdModeResetTimeout = null;
 // MRU Stack Operations
 // ============================================
 
-// Debounced save to avoid excessive writes
-let saveTimeout = null;
-function saveStackDebounced() {
-  if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    chrome.storage.local.set({ tabStack });
-  }, 500);
+// Save immediately: in MV3 the Service Worker can be evicted at any moment
+// (sleep, ~30s idle), so a debounced write would be lost before it fires.
+// chrome.storage.local has no write-rate quota, so immediate saves are safe.
+function saveStack() {
+  chrome.storage.local.set({ tabStack });
 }
 
 function moveToTop(tabId, windowId) {
@@ -49,14 +51,14 @@ function moveToTop(tabId, windowId) {
     tabStack.pop();
   }
   // Persist to survive Service Worker sleep
-  saveStackDebounced();
+  saveStack();
 }
 
 function removeFromStack(tabId) {
   const wasFirst = tabStack.length > 0 && tabStack[0].tabId === tabId;
   tabStack = tabStack.filter(t => t.tabId !== tabId);
   // Persist to survive Service Worker sleep
-  saveStackDebounced();
+  saveStack();
   return wasFirst;
 }
 
@@ -126,7 +128,7 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
 // Track window removal - clean up tabs from closed windows
 chrome.windows.onRemoved.addListener((windowId) => {
   tabStack = tabStack.filter(t => t.windowId !== windowId);
-  saveStackDebounced();
+  saveStack();
 
   // Reset popup tracking if MRU popup was closed
   if (windowId === mruPopupWindowId) {
@@ -136,6 +138,10 @@ chrome.windows.onRemoved.addListener((windowId) => {
 
 // Handle keyboard commands
 chrome.commands.onCommand.addListener(async (command) => {
+  // Ensure the stack has been restored before acting — a command may be what
+  // woke the Service Worker, arriving before initialize() has finished.
+  await initPromise;
+
   if (command === 'quick-switch') {
     if (!settings.quickSwitchEnabled) {
       return;
@@ -229,6 +235,9 @@ chrome.commands.onCommand.addListener(async (command) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'getMRUTabs') {
     (async () => {
+      // Wait for the stack restore in case the popup woke the Service Worker
+      await initPromise;
+
       // Get MRU tabs first
       const mruEntries = getMRUTabs(message.limit || 20);
       const mruTabIds = new Set(mruEntries.map(e => e.tabId));
@@ -354,7 +363,21 @@ async function initialize() {
     }
     console.log('Last Tab: initialized with', tabStack.length, 'tabs');
   }
+
+  // Force the genuinely active tab to the top. While the Service Worker was
+  // asleep it may have missed tab switches, so the restored order can be stale
+  // and tabStack[0] wrong — which would make Ctrl+Q jump to the wrong tab.
+  try {
+    const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (activeTab) {
+      tabStack = tabStack.filter(t => t.tabId !== activeTab.id);
+      tabStack.unshift({ tabId: activeTab.id, windowId: activeTab.windowId });
+      saveStack();
+    }
+  } catch (error) {
+    console.error('Last Tab: failed to resolve active tab on init:', error);
+  }
 }
 
-// Run initialization
-initialize();
+// Run initialization; handlers await this promise before touching the stack.
+initPromise = initialize();

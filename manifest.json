@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Last Tab",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Switch to previously used tab with Ctrl+Q (MRU tab switching like in IDE)",
 
   "permissions": [
